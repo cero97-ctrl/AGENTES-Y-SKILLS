@@ -1,0 +1,149 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{a4paper, margin=1in}
+
+\title{Protocolo de Ingesta de Contexto para Agentes de IA\\ \large Framework AGENTES-Y-SKILLS}
+\author{Gemini Code Assist}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introducción}
+Para colaborar eficazmente con un Agente de Software en un proyecto nuevo (por ejemplo, de Ciberseguridad), no se debe volcar toda la información de golpe. Se debe seguir un orden jerárquico de suministro de instrucciones basado en los archivos \texttt{.md} del framework. Esto asegura que el agente entienda primero \textit{cómo pensar} y luego \textit{qué hacer}.
+
+\section{Secuencia de Suministro de Instrucciones}
+
+\subsection{1. Nivel Meta: El Protocolo Cognitivo (\texttt{docs/manual-operativo.md})}
+\textbf{Cuándo suministrar:} Al inicio de la sesión o en el \textit{System Prompt}.\\
+\textbf{Propósito:} Configurar el comportamiento del modelo antes de que vea el código del proyecto.
+
+\begin{itemize}
+    \item Define la restricción de tokens (brevedad).
+    \item Establece la arquitectura de 'Lazy Loading' (no alucinar información no cargada).
+    \item Instruye sobre el uso de la orquestación para tareas grandes.
+\end{itemize}
+
+\textit{Instrucción al Agente:} 'Lee \texttt{docs/manual-operativo.md} para entender tus restricciones operativas y tu estándar de respuesta.'
+
+\subsection{2. Nivel Contexto: El Mapa del Territorio (\texttt{Agent.md})}
+\textbf{Cuándo suministrar:} Inmediatamente después del manual, como contexto principal del proyecto.\\
+\textbf{Propósito:} Situar al agente en el dominio específico (Ciberseguridad en este caso).
+
+\begin{itemize}
+    \item \textbf{Visión:} 'Este es un proyecto de pentesting/auditoría...'
+    \item \textbf{Mapa:} Dónde están los scripts de nmap, los reportes, etc.
+    \item \textbf{Índice de Skills:} Qué herramientas tiene disponibles (ej. \texttt{skill-vuln-scan}).
+\end{itemize}
+
+\textit{Instrucción al Agente:} 'Analiza \texttt{Agent.md} para comprender la estructura del repositorio y tus objetivos actuales.'
+
+\subsection{3. Nivel Funcional: Activación Bajo Demanda (\texttt{skills/*.md})}
+\textbf{Cuándo suministrar:} \textbf{Nunca} de forma proactiva al inicio. Solo cuando el \textit{Trigger} se active.\\
+\textbf{Propósito:} Ahorrar ventana de contexto.
+
+\begin{itemize}
+    \item El agente leerá \texttt{Agent.md}, verá que existe una skill llamada \texttt{network-audit}.
+    \item Cuando tú le pidas: 'Escanea la red', el agente buscará y leerá \texttt{skills/network-audit/skill.md}.
+    \item Este archivo contiene los \textit{One-Shot prompts} (ejemplos) de cómo usar herramientas específicas de seguridad.
+\end{itemize}
+
+\section{Ejemplo Aplicado: Proyecto de Ciberseguridad}
+
+Si inicias un proyecto de auditoría de seguridad, el flujo de creación de archivos sería:
+
+\begin{enumerate}
+    \item \textbf{Copiar \texttt{docs/manual-operativo.md}:} Sin cambios, es la base lógica.
+    \item \textbf{Crear \texttt{Agent.md} Raíz:}
+\begin{lstlisting}[language=bash, basicstyle=\small\ttfamily, frame=single]
+# Agent.md: Contexto Maestro - SecurityOps-Audit
+
+## 1. Vision General
+Plataforma de auditoria de seguridad automatizada.
+Objetivo: Detectar CVEs en infraestructura critica.
+
+## 2. Mapa del Repositorio
+* /targets: Listas de IPs y dominios autorizados (Scope).
+* /scans: Logs crudos de Nmap/OpenVAS.
+* /skills:
+    * skill-recon: Reconocimiento pasivo y activo.
+    * skill-exploit-check: Validacion de vulnerabilidades.
+    * skill-report: Generacion de informes ejecutivos.
+
+## 3. Protocolo de Seguridad (ROE)
+* STRICT: Solo operar sobre activos listados en /targets.
+* LOGGING: Registrar todos los comandos ejecutados.
+* MODE: Solo lectura/escaneo, no explotacion sin confirmacion.
+\end{lstlisting}
+    \item \textbf{Definir Skills Específicas:} Crear \texttt{skills/skill-recon/skill.md} con los comandos exactos:
+\begin{lstlisting}[language=bash, basicstyle=\small\ttfamily, frame=single]
+# Skill: Reconocimiento (Recon)
+
+## Metadata
+* Trigger: Activar al requerir 'escanear', 'enumerar' o 'mapear'.
+* Scope: /scans, /targets
+* Tools: nmap, subfinder
+
+## Resources (One-Shot)
+### Escaneo de Puertos
+nmap -sS -sV -oN /scans/nmap_res.txt -iL /targets/scope.txt
+### Subdominios
+subfinder -dL /targets/domains.txt -o /scans/subs.txt
+\end{lstlisting}
+    \item \textbf{Configurar Skill de Reporte:} Crear \texttt{skills/skill-report/skill.md} para consolidar hallazgos:
+\begin{lstlisting}[language=bash, basicstyle=\small\ttfamily, frame=single]
+# Skill: Report Generation
+
+## Metadata
+* Trigger: 'generar reporte', 'crear informe', 'exportar pdf'
+* Scope: /scans, /reports
+* Tools: pandoc, file-system
+
+## Resources (One-Shot)
+### Compilaci\'on de Hallazgos
+cat /scans/*.txt > /reports/raw_findings.md
+### Generaci\'on de PDF
+pandoc /reports/final.md -o /reports/audit.pdf --toc
+\end{lstlisting}
+\end{enumerate}
+
+\section{Manejo de Errores y Alucinaciones}
+El framework está diseñado para minimizar alucinaciones, pero si ocurren, el archivo \texttt{docs/manual-operativo.md} sirve como ancla de la verdad.
+
+\subsection{Protocolo de Recuperación}
+Si el agente inventa rutas o herramientas no listadas en \texttt{Agent.md}:
+\begin{enumerate}
+    \item \textbf{Invocar Restricciones:} Recordar al agente la sección 'Restricción de Eficiencia' del manual.
+    \item \textbf{Verificación de Skills:} Preguntar: '¿Has cargado la skill necesaria para esta tarea? Revisa los Triggers en \texttt{Agent.md}.'
+    \item \textbf{Prompt de Corrección:} 'Detente. Tu respuesta contradice el \texttt{docs/manual-operativo.md}. Vuelve a leer \texttt{Agent.md} y limita tu respuesta a los recursos listados allí.'
+\end{enumerate}
+
+\section{Mantenimiento y Evolución del Contexto}
+El contexto de la IA se degrada si no se mantiene actualizado con los cambios del código.
+
+\begin{itemize}
+    \item \textbf{Sincronización Periódica:} Al finalizar hitos importantes, instruye: 'Ejecuta \texttt{skill-sync} y actualiza el mapa en \texttt{Agent.md} con los nuevos directorios creados.'
+    \item \textbf{Refactorización de Skills:} Si una skill crece demasiado (más de 500 líneas), pide al agente: 'Divide \texttt{skill-recon} en \texttt{skill-recon-active} y \texttt{skill-recon-passive}.'
+\end{itemize}
+
+\section{Conclusión}
+Este protocolo transforma la interacción con la IA de un chat desestructurado a un flujo de ingeniería sistemático. Al respetar la jerarquía \texttt{Manual} $\rightarrow$ \texttt{Agent} $\rightarrow$ \texttt{Skill}, se garantiza consistencia, se minimizan alucinaciones y se permite la escalabilidad del proyecto.
+
+\section{Resumen del Flujo}
+\begin{center}
+    \textbf{Manual Operativo} $\rightarrow$ Define \textit{CÓMO} trabajar.\\
+    $\downarrow$\\
+    \textbf{Agent.md} $\rightarrow$ Define \textit{DÓNDE} trabajar.\\
+    $\downarrow$\\
+    \textbf{Skills (Lazy Load)} $\rightarrow$ Define \textit{QUÉ} herramientas usar (solo al necesitarlas).
+\end{center}
+
+\end{document}
