@@ -4,6 +4,8 @@
 \usepackage{geometry}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
 \usepackage{hyperref}
 
 \geometry{a4paper, margin=1in}
@@ -152,5 +154,25 @@ Este protocolo transforma la interacción con la IA de un chat desestructurado a
     $\downarrow$\\
     \textbf{Skills (Lazy Load)} $\rightarrow$ Define \textit{QUÉ} herramientas usar (solo al necesitarlas).
 \end{center}
+
+\begin{table}[htbp]
+\centering
+\tiny
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X l}
+\toprule
+\textbf{Nivel Meta (Protocolo Cognitivo)} & \textbf{docs/manual-operativo.md} & \textbf{Configurar el comportamiento del modelo, definir restricciones operativas y estándares de respuesta antes de procesar código.} & \textbf{Al inicio de la sesión o dentro del System Prompt.} & \textbf{Brevedad en tokens, arquitectura de "Lazy Loading" y uso de orquestación para tareas extensas.} & \textbf{Protocolo de recuperación, modelo de orquestador/sub-agentes y ancla de la verdad contra alucinaciones.} & \textbf{Leer el manual para entender las restricciones y el estándar de respuesta ante instrucciones iniciales.} & \textbf{[1, 2]} \\
+\midrule
+Nivel Contexto (Mapa del Territorio) & Agent.md & Situar al agente en el dominio específico del proyecto, proporcionando la arquitectura, estándares y mapa del repositorio. & Inmediatamente después del manual operativo, como contexto principal. & Máximo 500 líneas (idealmente entre 250 y 500) para mantener una alta densidad de señal/ruido. & Visión general, mapa del repositorio, índice de skills, flujos de trabajo y stack tecnológico. & Analizar para comprender la estructura del repositorio, objetivos actuales y ubicación de recursos. & [1-3] \\
+Nivel Funcional (Activación bajo demanda) & skills/*.md & Cargar capacidades técnicas específicas de forma modular para optimizar el uso de la ventana de contexto. & Solo cuando se activa un disparador específico durante la ejecución de la tarea; nunca de forma proactiva. & Aislamiento de capacidades; si una skill supera las 500 líneas, debe refactorizarse y dividirse. & Trigger (activador), Scope (alcance), Tools (herramientas) y Resources (plantillas One-Shot). & Autoinvocación: buscar y leer la skill correspondiente cuando la solicitud del usuario coincide con el trigger. & [1-3] \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section*{Fuentes}
+\begin{itemize}
+\item [1] guia-orden-instrucciones.pdf
+\item [2] manual-operativo.md
+\item [3] Agent.md
+\end{itemize}
 
 \end{document}
